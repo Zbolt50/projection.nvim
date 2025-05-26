@@ -1,0 +1,9 @@
+{
+    "diagnostics.disable": [
+        "unused-function"
+    ],
+    "diagnostics.globals": [
+        "vim",
+        "write_dirs"
+    ]
+}
