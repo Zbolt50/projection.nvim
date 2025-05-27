@@ -1,7 +1,6 @@
 local config = require("projection.config")
 local M = {}
 
-print("init.lua loaded...")
 config.setup() -- apply default setup
 
 function M.setup(opts)
@@ -13,6 +12,8 @@ function M.auto_scan()
     path.auto_scan()
 end
 
+-- Scan Dirs when entering Vim each time
+-- Might make a way to check if changes have been made to save on start time
 vim.api.nvim_create_autocmd("VimEnter", {
     callback = function()
         M.auto_scan()

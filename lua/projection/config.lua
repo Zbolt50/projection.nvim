@@ -15,8 +15,10 @@ local defaults = {
 
     -- Filter project files to search for
     -- TODO: Add pattern globbing later
-    filters = { ".git", "stylua.toml", ".clang-format" },
+    filters = { ".git", "stylua.toml" },
 
+    -- User option to allow for manual project tracking
+    auto_scan_paths = true,
     -- Files made by the plugin will be stored here
     datapath = vim.fn.stdpath("data"),
 }

@@ -2,11 +2,13 @@ local config = require("projection.config")
 -- Path finding and storing functions
 local uv = vim.uv
 local M = {}
+local is_windows = vim.fn.has("win32") or vim.fn.has("wsl")
 
 -- [[ TODO:
 
 --  Save project file paths to a good location to read/write from/to
 --  Allow for the user to select whether they will manually add projects or let auto_scanning work
+--  This can be expanded upon by writing to a list of excluded projects individually through the telescope menu
 --  Integrate with Telescope to pick projects
 
 --]]
@@ -16,6 +18,17 @@ M.ensure_data_dir = function()
     local data_dir = config.options.datapath .. "/projection"
     vim.fn.mkdir(data_dir, "p")
     return data_dir
+end
+
+-- Normalize path and handle windows filesystem
+---@param path string
+---@return string
+M.normalize_path = function(path)
+    local normalized = path:gsub("\\", "/"):gsub("//", "/")
+    if is_windows then
+        normalized = normalized:sub(1, 1):lower() .. normalized:sub(2)
+    end
+    return normalized
 end
 
 -- Return a table of strings of paths to valid directories based on user specified criteria Ex: .git folders, formatter files etc
@@ -54,10 +67,14 @@ M.find_dirs = function(paths, filter, exclude)
     local function scan(dir)
         -- Pattern exclusion
         for _, ex in ipairs(exclude) do
-            if vim.fn.expand(dir) == vim.fn.expand(ex) then
-                print("Skipping excluded path:", dir)
+            if dir:find(vim.fn.expand(ex), 1, true) == 1 then
+                print("Skipping excluded subtree:", dir)
                 return
             end
+            --[[            if vim.fn.expand(dir) == vim.fn.expand(ex) then
+                print("Skipping excluded path:", dir)
+                return
+            end ]]
         end
 
         local fd = uv.fs_scandir(dir)
@@ -70,7 +87,7 @@ M.find_dirs = function(paths, filter, exclude)
             if not name then
                 break
             end
-            local full_path = dir .. "/" .. name
+            local full_path = M.normalize_path(dir .. "/" .. name)
 
             if target_match(name) then
                 table.insert(dirs, full_path)
@@ -114,11 +131,17 @@ M.write_dirs = function(dirs, output)
     end
     f:close()
 
-    vim.notify("Wrote project paths to: " .. file_path, vim.log.levels.INFO)
+    -- vim.notify("Wrote project paths to: " .. file_path, vim.log.levels.INFO)
+    vim.notify("Wrote project paths to: " .. file_path, vim.log.levels.DEBUG)
 end
 
 -- Make this run on an autocommand
 M.auto_scan = function() -- Update these parameters later to take in user options and file args
+    --if M.opts.auto_scan_paths == false then
+    --    return
+    --end
+
+    -- BUG: When scanning very large directories (Ex. "~"), autocmd seems to break
     local opts = config.options
     local dirs = M.find_dirs(opts.paths, opts.filters, opts.exclude_paths)
     M.write_dirs(dirs, "")
