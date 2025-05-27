@@ -1,4 +1,5 @@
 local config = require("projection.config")
+local telescope = require("telescope.projects")
 local M = {}
 
 config.setup() -- apply default setup
@@ -21,4 +22,8 @@ vim.api.nvim_create_autocmd("VimEnter", {
     once = true,
 })
 
+-- Keymaps
+vim.keymap.set("n", "<leader>fp", function()
+    telescope.browse_projects()
+end, { desc = "Find Project" })
 return M

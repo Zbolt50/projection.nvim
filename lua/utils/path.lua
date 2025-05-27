@@ -90,8 +90,10 @@ M.find_dirs = function(paths, filter, exclude)
             local full_path = M.normalize_path(dir .. "/" .. name)
 
             if target_match(name) then
-                table.insert(dirs, full_path)
+                table.insert(dirs, M.normalize_path(dir))
             end
+            -- BUG: Check if path is already written to skip duplicates
+
             if type == "directory" then
                 scan(full_path) -- go into subdir
             end
@@ -145,6 +147,23 @@ M.auto_scan = function() -- Update these parameters later to take in user option
     local opts = config.options
     local dirs = M.find_dirs(opts.paths, opts.filters, opts.exclude_paths)
     M.write_dirs(dirs, "")
+end
+
+-- Returns a list of project directories
+---@param file string
+---@return string[]:
+M.read_dirs = function(file)
+    local project_dirs = {}
+    local f = io.open(file, "r")
+    if not f then
+        vim.notify("Failed to open file: " .. file, vim.log.levels.ERROR)
+        return {}
+    end
+    for line in f:lines() do
+        table.insert(project_dirs, vim.fn.expand(line))
+    end
+    f:close()
+    return project_dirs
 end
 
 return M
