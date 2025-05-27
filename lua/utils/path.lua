@@ -38,6 +38,8 @@ end
 ---@return string[]
 M.find_dirs = function(paths, filter, exclude)
     local dirs = {}
+    local seen = {} -- Look for duplicate entries for directories with multiple filtered file matches
+
     -- Might want to add exclude_filters to opts so you can also not add certain folders to project dirs
     -- Might simplify this into the match function later
     local function is_excluded(pattern, excluded)
@@ -68,7 +70,7 @@ M.find_dirs = function(paths, filter, exclude)
         -- Pattern exclusion
         for _, ex in ipairs(exclude) do
             if dir:find(vim.fn.expand(ex), 1, true) == 1 then
-                print("Skipping excluded subtree:", dir)
+                -- print("Skipping excluded subtree:", dir)
                 return
             end
             --[[            if vim.fn.expand(dir) == vim.fn.expand(ex) then
@@ -90,9 +92,13 @@ M.find_dirs = function(paths, filter, exclude)
             local full_path = M.normalize_path(dir .. "/" .. name)
 
             if target_match(name) then
-                table.insert(dirs, M.normalize_path(dir))
+                -- Check for dups
+                local normalized = M.normalize_path(dir)
+                if not seen[normalized] then
+                    seen[normalized] = true
+                    table.insert(dirs, normalized)
+                end
             end
-            -- BUG: Check if path is already written to skip duplicates
 
             if type == "directory" then
                 scan(full_path) -- go into subdir
@@ -134,17 +140,25 @@ M.write_dirs = function(dirs, output)
     f:close()
 
     -- vim.notify("Wrote project paths to: " .. file_path, vim.log.levels.INFO)
-    vim.notify("Wrote project paths to: " .. file_path, vim.log.levels.DEBUG)
+    -- vim.notify("Wrote project paths to: " .. file_path, vim.log.levels.DEBUG)
 end
+
+--- Removes a dir from the list and adds it to a black list to not be added back through auto_scan
+---@param dir string
+M.delete_dir = function(dir) end
 
 -- Make this run on an autocommand
 M.auto_scan = function() -- Update these parameters later to take in user options and file args
-    --if M.opts.auto_scan_paths == false then
-    --    return
-    --end
-
     -- BUG: When scanning very large directories (Ex. "~"), autocmd seems to break
+
     local opts = config.options
+    -- Allows ability to disable auto scanning
+    -- Preserves any existing scanned paths
+    if opts.auto_scan_paths == false then
+         -- vim.notify("auto_scan disabled.", vim.log.levels.DEBUG)
+        return
+    end
+
     local dirs = M.find_dirs(opts.paths, opts.filters, opts.exclude_paths)
     M.write_dirs(dirs, "")
 end

@@ -18,11 +18,10 @@
 ## Installation
 
 Install via your favorite package manager: 
-[Or use a package manager you absolutely hate! I can't tell you how to live your life...]: #
 
+#### [lazy.nvim](https://github.com/folke/lazy.nvim)
 
-Ex: lazy.nvim 
-
+Ex:
 ```lua
 return {
     "Zbolt50/projection.nvim",

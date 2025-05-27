@@ -20,6 +20,7 @@ local defaults = {
     -- User option to allow for manual project tracking
     auto_scan_paths = true,
     -- Files made by the plugin will be stored here
+    -- TODO: Refactor so that way user can declare their own datapath to store their project files
     datapath = vim.fn.stdpath("data"),
 }
 
